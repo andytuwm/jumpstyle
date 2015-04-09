@@ -1,9 +1,14 @@
 window.onload = function () {
     "use strict";
 
+    // Player stats constants
     var moveVelocity = 300,
         gravityAcceleration = 1500,
         jumpVelocity = 500;
+
+    // Checks for special movements
+    var jumpCount = 0,
+        jumpLimit = 1;
 
     // Load 800 x 600 game window, auto rendering method, append to body
     var game = new Phaser.Game(800, 600, Phaser.AUTO, "");
@@ -28,6 +33,10 @@ window.onload = function () {
 
             // this.cursor will refer to keyboard input
             this.cursor = game.input.keyboard.createCursorKeys();
+            // Jump check event listener
+            this.cursor.up.onDown.add(function () {
+                this.jumpLogic();
+            }, this);
 
             // Set up the player sprite
             this.player = game.add.sprite(game.world.centerX, game.world.centerY, 'player');
@@ -37,6 +46,7 @@ window.onload = function () {
             // Add vertical gravity to the player
             this.player.body.gravity.y = gravityAcceleration;
 
+            // Create map of platformer
             this.createWorld();
         },
 
@@ -70,10 +80,19 @@ window.onload = function () {
                 this.player.body.velocity.x = 0;
             }
 
-            // If the up arrow key is pressed and the player is touching the ground
-            if (this.cursor.up.isDown && this.player.body.touching.down) {
-                // Move the player upward (jump)
+            // If player is touching floor, double jump count is reset
+            if (this.player.body.touching.down) {
+                jumpCount = 0;
+            }
+        },
+
+        jumpLogic: function () {
+            if (this.player.body.touching.down) {
                 this.player.body.velocity.y = -jumpVelocity;
+            }
+            if (!this.player.body.touching.down && jumpCount < jumpLimit) {
+                this.player.body.velocity.y = -jumpVelocity;
+                jumpCount++;
             }
         },
 
