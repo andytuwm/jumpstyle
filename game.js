@@ -1,5 +1,10 @@
 window.onload = function () {
     "use strict";
+
+    var moveVelocity = 300,
+        gravityAcceleration = 1500,
+        jumpVelocity = 500;
+
     // Load 800 x 600 game window, auto rendering method, append to body
     var game = new Phaser.Game(800, 600, Phaser.AUTO, "");
     var mainState = {
@@ -30,7 +35,7 @@ window.onload = function () {
             // Tell Phaser that the player will use the Arcade physics engine
             game.physics.arcade.enable(this.player);
             // Add vertical gravity to the player
-            this.player.body.gravity.y = 500;
+            this.player.body.gravity.y = gravityAcceleration;
 
             this.createWorld();
         },
@@ -50,13 +55,13 @@ window.onload = function () {
             // If the left arrow key is pressed
             if (this.cursor.left.isDown) {
                 // Move the player to the left
-                this.player.body.velocity.x = -200;
+                this.player.body.velocity.x = -moveVelocity;
             }
 
             // If the right arrow key is pressed
             else if (this.cursor.right.isDown) {
                 // Move the player to the right
-                this.player.body.velocity.x = 200;
+                this.player.body.velocity.x = moveVelocity;
             }
 
             // If neither the right or left arrow key is pressed
@@ -68,7 +73,7 @@ window.onload = function () {
             // If the up arrow key is pressed and the player is touching the ground
             if (this.cursor.up.isDown && this.player.body.touching.down) {
                 // Move the player upward (jump)
-                this.player.body.velocity.y = -320;
+                this.player.body.velocity.y = -jumpVelocity;
             }
         },
 
