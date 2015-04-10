@@ -9,6 +9,8 @@ window.onload = function () {
     // Checks for special movements
     var jumpCount = 0,
         jumpLimit = 1;
+    var doubleTapRight = null,
+        doubleTapLeft = null;
 
     // Load 800 x 600 game window, auto rendering method, append to body
     var game = new Phaser.Game(800, 600, Phaser.AUTO, "");
@@ -30,12 +32,20 @@ window.onload = function () {
 
             // Load arcade physics option
             game.physics.startSystem(Phaser.Physics.ARCADE);
+            game.input.doubleTapRate = 250;
 
             // this.cursor will refer to keyboard input
             this.cursor = game.input.keyboard.createCursorKeys();
             // Jump check event listener
             this.cursor.up.onDown.add(function () {
                 this.jumpLogic();
+            }, this);
+            // Dash check event listener
+            this.cursor.right.onDown.add(function () {
+                this.dashRight();
+            }, this);
+            this.cursor.left.onDown.add(function () {
+                this.dashLeft();
             }, this);
 
             // Set up the player sprite
@@ -84,6 +94,7 @@ window.onload = function () {
             if (this.player.body.touching.down) {
                 jumpCount = 0;
             }
+
         },
 
         jumpLogic: function () {
@@ -93,6 +104,30 @@ window.onload = function () {
             if (!this.player.body.touching.down && jumpCount < jumpLimit) {
                 this.player.body.velocity.y = -jumpVelocity;
                 jumpCount++;
+            }
+        },
+
+        dashRight: function () {
+            if (doubleTapRight === null) {
+                doubleTapRight = this.cursor.right.timeDown;
+            } else {
+                if (this.cursor.right.timeDown - doubleTapRight < game.input.doubleTapRate) {
+                    console.log('dash');
+                    this.jumpLogic();
+                }
+                doubleTapRight = null;
+            }
+        },
+
+        dashLeft: function () {
+            if (doubleTapLeft === null) {
+                doubleTapLeft = this.cursor.left.timeDown;
+            } else {
+                if (this.cursor.left.timeDown - doubleTapLeft < game.input.doubleTapRate) {
+                    console.log('dash');
+                    this.jumpLogic();
+                }
+                doubleTapLeft = null;
             }
         },
 
