@@ -26,7 +26,7 @@ window.onload = function () {
         // That's where we load the game's assets
         preload: function () {
             game.stage.backgroundColor = '#B0BEC5';
-            game.load.image('player', 'assets/player.png');
+            game.load.image('player', 'assets/friendlyPlayer.png');
             game.load.image('wallV', 'assets/wallVertical.png');
             game.load.image('wallH', 'assets/wallHorizontal.png');
             game.load.image('bullet', 'assets/bullet.png');
@@ -40,11 +40,11 @@ window.onload = function () {
             game.physics.startSystem(Phaser.Physics.ARCADE);
             game.input.doubleTapRate = 300;
 
-            // this.cursor will refer to keyboard input
+            // this.cursor will refer to arrow keys input
             this.cursor = game.input.keyboard.createCursorKeys();
             // Jump check event listener
             this.cursor.up.onDown.add(function () {
-                this.jumpLogic();
+                this.jump();
             }, this);
             // Dash check event listener
             this.cursor.right.onDown.add(function () {
@@ -55,16 +55,10 @@ window.onload = function () {
             }, this);
 
             // Add a timer for use in dashes
-            this.timer = game.time.create(false);
+            this.dResetTimer = game.time.create(false);
+            this.dCheckResetTimer = game.time.create(false);
 
-            // Set up the player sprite
-            this.player = game.add.sprite(game.world.centerX, game.world.centerY, 'player');
-            this.player.anchor.setTo(0.5, 0.5);
-            // Tell Phaser that the player will use the Arcade physics engine
-            game.physics.arcade.enable(this.player);
-            // Add vertical gravity to the player
-            this.player.body.gravity.y = gravityAcceleration;
-
+            this.player = new Player(game, 'player', game.world.centerX, game.world.centerY);
             // Create map of platformer
             this.createWorld();
         },
@@ -117,7 +111,7 @@ window.onload = function () {
 
         },
 
-        jumpLogic: function () {
+        jump: function () {
             if (this.player.body.touching.down) {
                 this.player.body.velocity.y = -jumpVelocity;
             }
@@ -129,20 +123,25 @@ window.onload = function () {
 
         dashTimer: function () {
             dashing = true;
-            this.timer.add(dashTime, function () {
+            this.dResetTimer.add(dashTime, function () {
                 dashing = false;
-                this.timer.add(dashResetTime, function () {
+                this.dResetTimer.add(dashResetTime, function () {
                     canResetDash = true;
                 });
-                this.timer.start();
+                this.dResetTimer.start();
             }, this);
-            this.timer.start();
+            this.dResetTimer.start();
 
         },
 
         dashRight: function () {
             if (doubleTapRight === null) {
                 doubleTapRight = this.cursor.right.timeDown;
+                this.dCheckResetTimer.add(game.input.doubleTapRate, function () {
+                    doubleTapRight = null;
+                    this.dCheckResetTimer.start();
+                }, this);
+                this.dCheckResetTimer.start();
             } else {
                 if (this.cursor.right.timeDown - doubleTapRight < game.input.doubleTapRate && canDash) {
                     this.dashTimer();
@@ -157,6 +156,11 @@ window.onload = function () {
         dashLeft: function () {
             if (doubleTapLeft === null) {
                 doubleTapLeft = this.cursor.left.timeDown;
+                this.dCheckResetTimer.add(game.input.doubleTapRate, function () {
+                    doubleTapLeft = null;
+                    this.dCheckResetTimer.start();
+                }, this);
+                this.dCheckResetTimer.start();
             } else {
                 if (this.cursor.left.timeDown - doubleTapLeft < game.input.doubleTapRate && canDash) {
                     this.dashTimer();
