@@ -9,7 +9,7 @@ window.onload = function () {
         jumpLimit: 1,
         dashTime: 70,
         dashResetTime: 500
-    }
+    };
 
     // Checks for special movements
     var jumpCount = 0,
@@ -56,6 +56,9 @@ window.onload = function () {
                 this.dashLeft();
             }, this);
 
+            this.projectiles = game.add.group();
+            this.projectiles.enableBody = true;
+
             // Add a timer for use in dashes
             this.dResetTimer = game.time.create(false);
             this.dCheckResetTimer = game.time.create(false);
@@ -64,6 +67,17 @@ window.onload = function () {
             this.playerStats = new Player(game, 'player', game.world.centerX, game.world.centerY, stats);
             this.player = this.playerStats.sprite;
 
+            // this.shoot contains keys for the four directions to shoot in
+            this.shoot = {
+                up: game.input.keyboard.addKey(87),
+                down: game.input.keyboard.addKey(83),
+                left: game.input.keyboard.addKey(65),
+                right: game.input.keyboard.addKey(68)
+            };
+            this.shoot.right.onDown.add(function () {
+                this.shootRight();
+            }, this);
+
             // Create map of platformer
             this.createWorld();
         },
@@ -71,8 +85,9 @@ window.onload = function () {
         // This function is called 60 times per second 
         // It contains the game's logic
         update: function () {
-            // add collision between player and walls
+            // add collisions between objects
             game.physics.arcade.collide(this.player, this.walls);
+            game.physics.arcade.collide(this.projectiles, this.walls, this.destroyObj, null, this);
 
             // function to control player movements
             this.movePlayer();
@@ -201,6 +216,18 @@ window.onload = function () {
 
             // Set walls to be immovable
             this.walls.setAll('body.immovable', true);
+        },
+
+        shootRight: function () {
+            var bullet = game.add.sprite(this.player.body.x, this.player.body.y, 'bullet', 0, this.projectiles);
+            bullet.body.velocity.x = 1500;
+            bullet.checkWorldBounds = true;
+            bullet.events.onOutOfBounds.add(this.destroyObj, this);
+        },
+
+        destroyObj: function (obj) {
+            console.log('destroyed!');
+            obj.kill();
         }
     };
 
