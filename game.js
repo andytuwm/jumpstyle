@@ -4,13 +4,15 @@ window.onload = function () {
     // Player stats constants
     var moveVelocity = 300,
         gravityAcceleration = 1500,
-        jumpVelocity = 500;
+        jumpVelocity = 500,
+        jumpLimit = 1;
 
     // Checks for special movements
     var jumpCount = 0,
-        jumpLimit = 1;
-    var doubleTapRight = null,
-        doubleTapLeft = null;
+        doubleTapRight = null,
+        doubleTapLeft = null,
+        dashing = false,
+        canDash = true;
 
     // Load 800 x 600 game window, auto rendering method, append to body
     var game = new Phaser.Game(800, 600, Phaser.AUTO, "");
@@ -32,7 +34,7 @@ window.onload = function () {
 
             // Load arcade physics option
             game.physics.startSystem(Phaser.Physics.ARCADE);
-            game.input.doubleTapRate = 250;
+            game.input.doubleTapRate = 300;
 
             // this.cursor will refer to keyboard input
             this.cursor = game.input.keyboard.createCursorKeys();
@@ -47,6 +49,8 @@ window.onload = function () {
             this.cursor.left.onDown.add(function () {
                 this.dashLeft();
             }, this);
+
+            this.timer = game.time.create(false);
 
             // Set up the player sprite
             this.player = game.add.sprite(game.world.centerX, game.world.centerY, 'player');
@@ -87,12 +91,15 @@ window.onload = function () {
             // If neither the right or left arrow key is pressed
             else {
                 // Stop the player
-                this.player.body.velocity.x = 0;
+                if (!dashing) {
+                    this.player.body.velocity.x = 0;
+                }
             }
 
             // If player is touching floor, double jump count is reset
             if (this.player.body.touching.down) {
                 jumpCount = 0;
+                canDash = true;
             }
 
         },
@@ -107,13 +114,22 @@ window.onload = function () {
             }
         },
 
+        dashTimer: function () {
+            dashing = true;
+            this.timer.add(100, function () {
+                dashing = false;
+            }, this);
+            this.timer.start();
+        },
+
         dashRight: function () {
             if (doubleTapRight === null) {
                 doubleTapRight = this.cursor.right.timeDown;
             } else {
-                if (this.cursor.right.timeDown - doubleTapRight < game.input.doubleTapRate) {
-                    console.log('dash');
-                    this.jumpLogic();
+                if (this.cursor.right.timeDown - doubleTapRight < game.input.doubleTapRate && canDash) {
+                    this.dashTimer();
+                    this.player.body.velocity.x = moveVelocity * 7;
+                    canDash = false;
                 }
                 doubleTapRight = null;
             }
@@ -123,9 +139,10 @@ window.onload = function () {
             if (doubleTapLeft === null) {
                 doubleTapLeft = this.cursor.left.timeDown;
             } else {
-                if (this.cursor.left.timeDown - doubleTapLeft < game.input.doubleTapRate) {
-                    console.log('dash');
-                    this.jumpLogic();
+                if (this.cursor.left.timeDown - doubleTapLeft < game.input.doubleTapRate && canDash) {
+                    this.dashTimer();
+                    this.player.body.velocity.x = -moveVelocity * 7;
+                    canDash = false;
                 }
                 doubleTapLeft = null;
             }
