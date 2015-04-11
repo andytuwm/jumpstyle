@@ -1,19 +1,18 @@
-Player = function (game, playerSprite, createX, createY) {
+Player = function (game, playerSprite, createX, createY, stats) {
 
-    // Player stats constants
-    var moveVelocity = 300,
-        gravityAcceleration = 1500,
-        jumpVelocity = 500,
-        jumpLimit = 1,
-        dashTime = 70,
-        dashResetTime = 500;
-
-    // Set up the player sprite
-    var player = game.add.sprite(createX, createY, playerSprite);
-    player.anchor.setTo(0.5, 0.5);
+    var sprite = game.add.sprite(createX, createY, playerSprite);
+    sprite.anchor.setTo(0.5, 0.5);
     // Tell Phaser that the player will use the Arcade physics engine
-    game.physics.arcade.enable(player);
+    game.physics.arcade.enable(sprite);
     // Add vertical gravity to the player
-    player.body.gravity.y = gravityAcceleration;
-    return player;
+    sprite.body.gravity.y = stats.gravityAcceleration;
+    return {
+        sprite: sprite,
+        moveVelocity: stats.moveVelocity,
+        gravityAcceleration: stats.gravityAcceleration,
+        jumpVelocity: stats.jumpVelocity,
+        jumpLimit: stats.jumpLimit,
+        dashTime: stats.dashTime,
+        dashResetTime: stats.dashResetTime
+    };
 };

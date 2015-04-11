@@ -2,12 +2,14 @@ window.onload = function () {
     "use strict";
 
     // Player stats constants
-    var moveVelocity = 300,
-        gravityAcceleration = 1500,
-        jumpVelocity = 500,
-        jumpLimit = 1,
-        dashTime = 70,
-        dashResetTime = 500;
+    var stats = {
+        moveVelocity: 300,
+        gravityAcceleration: 1500,
+        jumpVelocity: 500,
+        jumpLimit: 1,
+        dashTime: 70,
+        dashResetTime: 500
+    }
 
     // Checks for special movements
     var jumpCount = 0,
@@ -38,7 +40,7 @@ window.onload = function () {
 
             // Load arcade physics option
             game.physics.startSystem(Phaser.Physics.ARCADE);
-            game.input.doubleTapRate = 300;
+            game.input.doubleTapRate = 200;
 
             // this.cursor will refer to arrow keys input
             this.cursor = game.input.keyboard.createCursorKeys();
@@ -58,7 +60,10 @@ window.onload = function () {
             this.dResetTimer = game.time.create(false);
             this.dCheckResetTimer = game.time.create(false);
 
-            this.player = new Player(game, 'player', game.world.centerX, game.world.centerY);
+            //Initialize player
+            this.playerStats = new Player(game, 'player', game.world.centerX, game.world.centerY, stats);
+            this.player = this.playerStats.sprite;
+
             // Create map of platformer
             this.createWorld();
         },
@@ -78,13 +83,13 @@ window.onload = function () {
             // If the left arrow key is pressed
             if (this.cursor.left.isDown) {
                 // Move the player to the left
-                this.player.body.velocity.x = -moveVelocity;
+                this.player.body.velocity.x = -this.playerStats.moveVelocity;
             }
 
             // If the right arrow key is pressed
             else if (this.cursor.right.isDown) {
                 // Move the player to the right
-                this.player.body.velocity.x = moveVelocity;
+                this.player.body.velocity.x = this.playerStats.moveVelocity;
             }
 
             // If neither the right or left arrow key is pressed
@@ -113,19 +118,19 @@ window.onload = function () {
 
         jump: function () {
             if (this.player.body.touching.down) {
-                this.player.body.velocity.y = -jumpVelocity;
+                this.player.body.velocity.y = -this.playerStats.jumpVelocity;
             }
-            if (!this.player.body.touching.down && jumpCount < jumpLimit) {
-                this.player.body.velocity.y = -jumpVelocity;
+            if (!this.player.body.touching.down && jumpCount < this.playerStats.jumpLimit) {
+                this.player.body.velocity.y = -this.playerStats.jumpVelocity;
                 jumpCount++;
             }
         },
 
         dashTimer: function () {
             dashing = true;
-            this.dResetTimer.add(dashTime, function () {
+            this.dResetTimer.add(this.playerStats.dashTime, function () {
                 dashing = false;
-                this.dResetTimer.add(dashResetTime, function () {
+                this.dResetTimer.add(this.playerStats.dashResetTime, function () {
                     canResetDash = true;
                 });
                 this.dResetTimer.start();
@@ -145,7 +150,7 @@ window.onload = function () {
             } else {
                 if (this.cursor.right.timeDown - doubleTapRight < game.input.doubleTapRate && canDash) {
                     this.dashTimer();
-                    this.player.body.acceleration.x = moveVelocity * 120;
+                    this.player.body.acceleration.x = this.playerStats.moveVelocity * 120;
                     canDash = false;
                     canResetDash = false;
                 }
@@ -164,7 +169,7 @@ window.onload = function () {
             } else {
                 if (this.cursor.left.timeDown - doubleTapLeft < game.input.doubleTapRate && canDash) {
                     this.dashTimer();
-                    this.player.body.acceleration.x = -moveVelocity * 120;
+                    this.player.body.acceleration.x = -this.playerStats.moveVelocity * 120;
                     canDash = false;
                     canResetDash = false;
                 }
