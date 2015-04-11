@@ -5,7 +5,8 @@ window.onload = function () {
     var moveVelocity = 300,
         gravityAcceleration = 1500,
         jumpVelocity = 500,
-        jumpLimit = 1;
+        jumpLimit = 1,
+        dashTime = 70;
 
     // Checks for special movements
     var jumpCount = 0,
@@ -27,6 +28,7 @@ window.onload = function () {
             game.load.image('player', 'assets/player.png');
             game.load.image('wallV', 'assets/wallVertical.png');
             game.load.image('wallH', 'assets/wallHorizontal.png');
+            game.load.image('bullet', 'assets/bullet.png');
         },
 
         // This function is called after the preload function
@@ -98,6 +100,10 @@ window.onload = function () {
                 }
             }
 
+            if (!dashing) {
+                this.player.body.acceleration.x = 0;
+            }
+
             // If player is touching floor, double jump count is reset
             if (this.player.body.touching.down) {
                 jumpCount = 0;
@@ -120,7 +126,7 @@ window.onload = function () {
 
         dashTimer: function () {
             dashing = true;
-            this.timer.add(100, function () {
+            this.timer.add(dashTime, function () {
                 dashing = false;
                 this.timer.add(1000, function () {
                     canResetDash = true;
@@ -137,7 +143,7 @@ window.onload = function () {
             } else {
                 if (this.cursor.right.timeDown - doubleTapRight < game.input.doubleTapRate && canDash) {
                     this.dashTimer();
-                    this.player.body.velocity.x = moveVelocity * 7;
+                    this.player.body.acceleration.x = moveVelocity * 120;
                     canDash = false;
                     canResetDash = false;
                 }
@@ -151,7 +157,7 @@ window.onload = function () {
             } else {
                 if (this.cursor.left.timeDown - doubleTapLeft < game.input.doubleTapRate && canDash) {
                     this.dashTimer();
-                    this.player.body.velocity.x = -moveVelocity * 7;
+                    this.player.body.acceleration.x = -moveVelocity * 120;
                     canDash = false;
                     canResetDash = false;
                 }
