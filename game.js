@@ -12,7 +12,8 @@ window.onload = function () {
         doubleTapRight = null,
         doubleTapLeft = null,
         dashing = false,
-        canDash = true;
+        canDash = true,
+        canResetDash = true;
 
     // Load 800 x 600 game window, auto rendering method, append to body
     var game = new Phaser.Game(800, 600, Phaser.AUTO, "");
@@ -50,6 +51,7 @@ window.onload = function () {
                 this.dashLeft();
             }, this);
 
+            // Add a timer for use in dashes
             this.timer = game.time.create(false);
 
             // Set up the player sprite
@@ -99,7 +101,9 @@ window.onload = function () {
             // If player is touching floor, double jump count is reset
             if (this.player.body.touching.down) {
                 jumpCount = 0;
-                canDash = true;
+                if (canResetDash) {
+                    canDash = true;
+                }
             }
 
         },
@@ -118,8 +122,13 @@ window.onload = function () {
             dashing = true;
             this.timer.add(100, function () {
                 dashing = false;
+                this.timer.add(1000, function () {
+                    canResetDash = true;
+                });
+                this.timer.start();
             }, this);
             this.timer.start();
+
         },
 
         dashRight: function () {
@@ -130,6 +139,7 @@ window.onload = function () {
                     this.dashTimer();
                     this.player.body.velocity.x = moveVelocity * 7;
                     canDash = false;
+                    canResetDash = false;
                 }
                 doubleTapRight = null;
             }
@@ -143,6 +153,7 @@ window.onload = function () {
                     this.dashTimer();
                     this.player.body.velocity.x = -moveVelocity * 7;
                     canDash = false;
+                    canResetDash = false;
                 }
                 doubleTapLeft = null;
             }
