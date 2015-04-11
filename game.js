@@ -6,7 +6,8 @@ window.onload = function () {
         gravityAcceleration = 1500,
         jumpVelocity = 500,
         jumpLimit = 1,
-        dashTime = 70;
+        dashTime = 70,
+        dashResetTime = 500;
 
     // Checks for special movements
     var jumpCount = 0,
@@ -24,7 +25,7 @@ window.onload = function () {
         // This function will be executed at the beginning
         // That's where we load the game's assets
         preload: function () {
-            game.stage.backgroundColor = '#3498db';
+            game.stage.backgroundColor = '#B0BEC5';
             game.load.image('player', 'assets/player.png');
             game.load.image('wallV', 'assets/wallVertical.png');
             game.load.image('wallH', 'assets/wallHorizontal.png');
@@ -100,6 +101,8 @@ window.onload = function () {
                 }
             }
 
+            // Acceleration should be checked regardless of what button is pressed
+            // so this must be separate.
             if (!dashing) {
                 this.player.body.acceleration.x = 0;
             }
@@ -128,7 +131,7 @@ window.onload = function () {
             dashing = true;
             this.timer.add(dashTime, function () {
                 dashing = false;
-                this.timer.add(1000, function () {
+                this.timer.add(dashResetTime, function () {
                     canResetDash = true;
                 });
                 this.timer.start();
