@@ -11,6 +11,9 @@ window.onload = function () {
         dashResetTime: 500
     };
 
+    // World constants
+    var bulletSpeed = 1600;
+
     // Checks for special movements
     var jumpCount = 0,
         doubleTapRight = null,
@@ -76,10 +79,16 @@ window.onload = function () {
                 right: game.input.keyboard.addKey(68)
             };
             this.shoot.right.onDown.add(function () {
-                this.shootRight();
+                this.shootProjectile('right');
             }, this);
             this.shoot.left.onDown.add(function () {
-                this.shootRight();
+                this.shootProjectile('left');
+            }, this);
+            this.shoot.up.onDown.add(function () {
+                this.shootProjectile('up');
+            }, this);
+            this.shoot.down.onDown.add(function () {
+                this.shootProjectile('down');
             }, this);
 
             // Create map of platformer
@@ -222,21 +231,36 @@ window.onload = function () {
             this.walls.setAll('body.immovable', true);
         },
 
-        shootRight: function () {
+        shootProjectile: function (dir) {
             if (!bulletPool.length) {
                 var bullet = game.add.sprite(this.player.body.x, this.player.body.y, 'bullet', 0, this.projectiles);
-                bullet.body.velocity.x = 1500;
+                if (dir === 'right') {
+                    bullet.body.velocity.x = bulletSpeed;
+                } else if (dir === 'left') {
+                    bullet.body.velocity.x = -bulletSpeed;
+                } else if (dir === 'up') {
+                    bullet.body.velocity.y = -bulletSpeed;
+                } else if (dir === 'down') {
+                    bullet.body.velocity.y = bulletSpeed;
+                }
                 bullet.checkWorldBounds = true;
                 bullet.events.onOutOfBounds.add(this.destroyObj, this);
             } else {
                 var bullet = bulletPool.pop();
                 bullet.reset(this.player.body.x, this.player.body.y);
-                bullet.body.velocity.x = 1500;
+                if (dir === 'right') {
+                    bullet.body.velocity.x = bulletSpeed;
+                } else if (dir === 'left') {
+                    bullet.body.velocity.x = -bulletSpeed;
+                } else if (dir === 'up') {
+                    bullet.body.velocity.y = -bulletSpeed;
+                } else if (dir === 'down') {
+                    bullet.body.velocity.y = bulletSpeed;
+                }
             }
         },
 
         destroyObj: function (obj) {
-            //console.log('killed!');
             bulletPool.push(obj.kill());
         }
     };
