@@ -1,0 +1,9 @@
+{
+  "name": "jumpstyle",
+  "version": "0.0.1",
+  "description": "HTML5 multiplayer platform shooter. Nice and ghetto.",
+  "dependencies": {
+    "express": "^4.12.3",
+    "socket.io": "^1.3.5"
+  }
+}
