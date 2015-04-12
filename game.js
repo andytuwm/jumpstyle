@@ -7,7 +7,7 @@ window.onload = function () {
         gravityAcceleration: 1500,
         jumpVelocity: 500,
         jumpLimit: 1,
-        dashTime: 70,
+        dashTime: 90,
         dashResetTime: 500
     };
 
