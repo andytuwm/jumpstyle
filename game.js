@@ -17,7 +17,8 @@ window.onload = function () {
         doubleTapLeft = null,
         dashing = false,
         canDash = true,
-        canResetDash = true;
+        canResetDash = true,
+        bulletPool = [];
 
     // Load 800 x 600 game window, auto rendering method, append to body
     var game = new Phaser.Game(800, 600, Phaser.AUTO, "");
@@ -75,6 +76,9 @@ window.onload = function () {
                 right: game.input.keyboard.addKey(68)
             };
             this.shoot.right.onDown.add(function () {
+                this.shootRight();
+            }, this);
+            this.shoot.left.onDown.add(function () {
                 this.shootRight();
             }, this);
 
@@ -219,15 +223,21 @@ window.onload = function () {
         },
 
         shootRight: function () {
-            var bullet = game.add.sprite(this.player.body.x, this.player.body.y, 'bullet', 0, this.projectiles);
-            bullet.body.velocity.x = 1500;
-            bullet.checkWorldBounds = true;
-            bullet.events.onOutOfBounds.add(this.destroyObj, this);
+            if (!bulletPool.length) {
+                var bullet = game.add.sprite(this.player.body.x, this.player.body.y, 'bullet', 0, this.projectiles);
+                bullet.body.velocity.x = 1500;
+                bullet.checkWorldBounds = true;
+                bullet.events.onOutOfBounds.add(this.destroyObj, this);
+            } else {
+                var bullet = bulletPool.pop();
+                bullet.reset(this.player.body.x, this.player.body.y);
+                bullet.body.velocity.x = 1500;
+            }
         },
 
         destroyObj: function (obj) {
-            console.log('destroyed!');
-            obj.kill();
+            //console.log('killed!');
+            bulletPool.push(obj.kill());
         }
     };
 
