@@ -15,7 +15,8 @@ window.onload = function () {
     var bulletSpeed = 1600;
 
     // Checks for special movements
-    var jumpCount = 0,
+    var socketId,
+        jumpCount = 0,
         doubleTapRight = null,
         doubleTapLeft = null,
         dashing = false,
@@ -110,7 +111,6 @@ window.onload = function () {
 
             // function to control player movements
             this.movePlayer();
-
         },
 
         movePlayer: function () {
@@ -272,9 +272,10 @@ window.onload = function () {
         },
 
         drawCurrentPlayersOnServer: function () {
-            socket.emit('get players');
-            socket.on('return players', function (sockets) {
+            socket.emit('get players', this.playerStats);
+            socket.on('return players', function (sockets, id) {
                 console.log(sockets);
+                socketId = id;
                 for (var i = 0; i < sockets.length; i++) {
                     var enemy = new Player(sockets[i], game, 'player', game.world.centerX, game.world.centerY, stats);
                     enemyPlayers.push(enemy);
@@ -318,4 +319,5 @@ window.onload = function () {
         }
         return false;
     }
+
 };
