@@ -275,6 +275,10 @@ window.onload = function () {
             socket.emit('get players');
             socket.on('return players', function (sockets) {
                 console.log(sockets);
+                for (var i = 0; i < sockets.length; i++) {
+                    var enemy = new Player(sockets[i], game, 'player', game.world.centerX, game.world.centerY, stats);
+                    enemyPlayers.push(enemy);
+                }
             });
         },
 
@@ -282,7 +286,7 @@ window.onload = function () {
 
             socket.on('new player', function (socket_id) {
                 var enemy = new Player(socket_id, game, 'player', game.world.centerX, game.world.centerY, stats);
-                enemyPlayers.push(enemy)
+                enemyPlayers.push(enemy);
                 console.log(enemyPlayers);
             });
 
@@ -305,7 +309,7 @@ window.onload = function () {
     */
     function findPlayerById(id) {
         if (id === "selfPlayer") {
-            return this.playerStats;
+            return game.state.states.main.playerStats;
         }
         for (var i = 0; i < enemyPlayers.length; i++) {
             if (enemyPlayers[i].id === id) {

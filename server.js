@@ -15,7 +15,7 @@ app.get('/', function (req, res) {
 // Event listeners set on opening socket connection
 io.on('connection', function (socket) {
     var socketid = socket.id;
-    console.log('User Connected', socketid);
+    console.log('User Connected:', socketid);
 
 
 
@@ -30,7 +30,7 @@ io.on('connection', function (socket) {
         var i = socketIDs.indexOf(socketid);
         socketIDs.splice(i, 1);
         io.emit('player leave', socketid);
-        console.log('User Disconnected', socketid);
+        console.log('User Disconnected:', socketid);
     });
 });
 
