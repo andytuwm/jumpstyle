@@ -7,7 +7,7 @@ window.onload = function () {
         gravityAcceleration: 1500,
         jumpVelocity: 500,
         jumpLimit: 1,
-        dashTime: 90,
+        dashTime: 80,
         dashResetTime: 500
     };
 
@@ -21,7 +21,8 @@ window.onload = function () {
         dashing = false,
         canDash = true,
         canResetDash = true,
-        bulletPool = [];
+        bulletPool = [],
+        enemyPlayers = [];
 
     // Load 800 x 600 game window, auto rendering method, append to body
     var game = new Phaser.Game(800, 600, Phaser.AUTO, "");
@@ -68,7 +69,8 @@ window.onload = function () {
             this.dCheckResetTimer = game.time.create(false);
 
             //Initialize player
-            this.playerStats = new Player(game, 'player', game.world.centerX, game.world.centerY, stats);
+            this.players = game.add.group();
+            this.playerStats = new Player('selfPlayer', game, 'player', game.world.centerX, game.world.centerY, stats);
             this.player = this.playerStats.sprite;
 
             // this.shoot contains keys for the four directions to shoot in
@@ -91,6 +93,9 @@ window.onload = function () {
                 this.shootProjectile('down');
             }, this);
 
+            // Listen to server events
+            this.addSocketListeners();
+
             // Create map of platformer
             this.createWorld();
         },
@@ -99,7 +104,7 @@ window.onload = function () {
         // It contains the game's logic
         update: function () {
             // add collisions between objects
-            game.physics.arcade.collide(this.player, this.walls);
+            game.physics.arcade.collide(this.players, this.walls);
             game.physics.arcade.collide(this.projectiles, this.walls, this.destroyObj, null, this);
 
             // function to control player movements
@@ -138,6 +143,7 @@ window.onload = function () {
             if (this.player.body.touching.down) {
                 jumpCount = 0;
                 if (canResetDash) {
+                    // Allow dashing again only after landing
                     canDash = true;
                 }
             }
@@ -262,10 +268,41 @@ window.onload = function () {
 
         destroyObj: function (obj) {
             bulletPool.push(obj.kill());
+        },
+
+        addSocketListeners: function () {
+            socket.on('new player', function (socket_id) {
+                var enemy = new Player(socket_id, game, 'player', game.world.centerX, game.world.centerY, stats);
+                enemyPlayers.push(enemy)
+                console.log(enemyPlayers);
+            });
+
+            socket.on('player leave', function (socket_id) {
+                var playerToRemove = findPlayerById(socket_id);
+                enemyPlayers.splice(enemyPlayers.indexOf(playerToRemove), 1);
+                playerToRemove.sprite.destroy();
+                console.log(enemyPlayers);
+            });
         }
     };
 
     // Add the game state defined above. Start it onload.
     game.state.add('main', mainState);
     game.state.start('main');
+
+    /*
+        Returns a Player object if found, otherwise false. Checks specifically
+        for 'self' player for consistency in getting the player object.
+    */
+    function findPlayerById(id) {
+        if (id === "selfPlayer") {
+            return this.playerStats;
+        }
+        for (var i = 0; i < enemyPlayers.length; i++) {
+            if (enemyPlayers[i].id === id) {
+                return enemyPlayers[i];
+            }
+        }
+        return false;
+    }
 };

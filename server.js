@@ -14,15 +14,20 @@ app.get('/', function (req, res) {
 
 // Event listeners set on opening socket connection
 io.on('connection', function (socket) {
-    console.log('User Connected');
+    console.log('User Connected', socket.id);
     sockets.push(socket);
-    var username;
+
+
+
+    io.emit('new player', socket.id);
+
+
 
     socket.on('disconnect', function () {
         var i = sockets.indexOf(socket);
         sockets.splice(i, 1);
-        //io.emit('userdc', username + " has left chat.");
-        console.log('User Disconnected');
+        io.emit('player leave', socket.id);
+        console.log('User Disconnected', socket.id);
     });
 });
 
