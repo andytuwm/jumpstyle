@@ -2,7 +2,7 @@ var express = require('express');
 var app = express();
 var http = require('http').Server(app);
 var io = require('socket.io')(http);
-var sockets = [];
+var socketIDs = []; // Track how many players there are
 
 // Allow serving static files in same directory as server file (root)
 app.use(express.static(__dirname));
@@ -14,20 +14,23 @@ app.get('/', function (req, res) {
 
 // Event listeners set on opening socket connection
 io.on('connection', function (socket) {
-    console.log('User Connected', socket.id);
-    sockets.push(socket);
+    var socketid = socket.id;
+    console.log('User Connected', socketid);
 
 
 
-    io.emit('new player', socket.id);
+    socket.broadcast.emit('new player', socket.id);
 
-
+    socket.on('get players', function () {
+        io.to(socketid).emit('return players', socketIDs);
+        socketIDs.push(socketid);
+    });
 
     socket.on('disconnect', function () {
-        var i = sockets.indexOf(socket);
-        sockets.splice(i, 1);
-        io.emit('player leave', socket.id);
-        console.log('User Disconnected', socket.id);
+        var i = socketIDs.indexOf(socketid);
+        socketIDs.splice(i, 1);
+        io.emit('player leave', socketid);
+        console.log('User Disconnected', socketid);
     });
 });
 

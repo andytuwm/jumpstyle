@@ -95,6 +95,7 @@ window.onload = function () {
 
             // Listen to server events
             this.addSocketListeners();
+            this.drawCurrentPlayersOnServer();
 
             // Create map of platformer
             this.createWorld();
@@ -270,7 +271,15 @@ window.onload = function () {
             bulletPool.push(obj.kill());
         },
 
+        drawCurrentPlayersOnServer: function () {
+            socket.emit('get players');
+            socket.on('return players', function (sockets) {
+                console.log(sockets);
+            });
+        },
+
         addSocketListeners: function () {
+
             socket.on('new player', function (socket_id) {
                 var enemy = new Player(socket_id, game, 'player', game.world.centerX, game.world.centerY, stats);
                 enemyPlayers.push(enemy)
