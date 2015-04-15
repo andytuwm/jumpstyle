@@ -272,7 +272,7 @@ window.onload = function () {
         },
 
         drawCurrentPlayersOnServer: function () {
-            socket.emit('get players', this.playerStats);
+            socket.emit('get players');
             socket.on('return players', function (sockets, id) {
                 console.log(sockets);
                 socketId = id;

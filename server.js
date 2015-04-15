@@ -22,9 +22,8 @@ io.on('connection', function (socket) {
 
     socket.broadcast.emit('new player', socket.id);
 
-    socket.on('get players', function (player) {
+    socket.on('get players', function () {
         io.to(socketid).emit('return players', socketIDs, socketid);
-        players.push(player);
         socketIDs.push(socketid);
     });
 
