@@ -111,10 +111,10 @@ window.onload = function () {
 
             // function to control player movements
             this.movePlayer();
-            socket.emit('position update', {
+            /*socket.emit('position update', {
                 x: this.player.body.x,
                 y: this.player.body.y
-            });
+            });*/
         },
 
         movePlayer: function () {
@@ -136,12 +136,6 @@ window.onload = function () {
                 if (!dashing) {
                     this.player.body.velocity.x = 0;
                 }
-            }
-
-            // Acceleration should be checked regardless of what button is pressed
-            // so this must be separate.
-            if (!dashing) {
-                this.player.body.acceleration.x = 0;
             }
 
             // If player is touching floor, double jump count is reset
@@ -169,6 +163,10 @@ window.onload = function () {
             dashing = true;
             this.dResetTimer.add(this.playerStats.dashTime, function () {
                 dashing = false;
+                // Stop acceleration after completing dash.
+                this.player.body.acceleration.x = 0;
+
+                // Add timer for after how long player can dash again.
                 this.dResetTimer.add(this.playerStats.dashResetTime, function () {
                     canResetDash = true;
                 });
@@ -276,6 +274,7 @@ window.onload = function () {
                         y: this.player.body.y
                     });
                 } else {
+                    // TODO add another bulletPool for enemy bullet sprites
                     bullet.reset(pos.x, pos.y);
                 }
                 if (dir === 'right') {
@@ -298,9 +297,10 @@ window.onload = function () {
         drawCurrentPlayersOnServer: function () {
             socket.emit('get players');
             socket.on('return players', function (sockets, id) {
-                console.log(sockets);
+                //console.log(sockets);
                 socketId = id;
                 for (var i = 0; i < sockets.length; i++) {
+                    // TODO Add sprite at latest updated correct position
                     var enemy = new Player(sockets[i], game, 'player', game.world.centerX, game.world.centerY, stats);
                     enemyPlayers.push(enemy);
                 }
@@ -309,12 +309,14 @@ window.onload = function () {
 
         addSocketListeners: function () {
 
+            //Add new player at center
             socket.on('new player', function (socket_id) {
                 var enemy = new Player(socket_id, game, 'player', game.world.centerX, game.world.centerY, stats);
                 enemyPlayers.push(enemy);
                 console.log(enemyPlayers);
             });
 
+            // Remove the player sprite that left
             socket.on('player leave', function (socket_id) {
                 var playerToRemove = findPlayerById(socket_id);
                 enemyPlayers.splice(enemyPlayers.indexOf(playerToRemove), 1);
@@ -322,6 +324,7 @@ window.onload = function () {
                 console.log(enemyPlayers);
             });
 
+            // Set the exact position of a sprite. Used to sync up positions at a lower frequency
             socket.on('position updates', function (id, pos) {
                 var player = findPlayerById(id);
                 if (player) {
@@ -331,6 +334,7 @@ window.onload = function () {
                 }
             });
 
+            // Shoot bullet in the direction and from the position that enemy shot at
             socket.on('shoot', function (dir, pos) {
                 game.state.states.main.shootProjectile(dir, pos);
             });
