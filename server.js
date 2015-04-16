@@ -18,13 +18,19 @@ io.on('connection', function (socket) {
     var socketid = socket.id;
     console.log('User Connected:', socketid);
 
+    socket.broadcast.emit('new player', socketid);
 
-
-    socket.broadcast.emit('new player', socket.id);
+    socket.on('position update', function (pos) {
+        socket.broadcast.emit('position updates', socketid, pos);
+    });
 
     socket.on('get players', function () {
         io.to(socketid).emit('return players', socketIDs, socketid);
         socketIDs.push(socketid);
+    });
+
+    socket.on('shoot', function (dir, pos) {
+        socket.broadcast.emit('shoot', dir, pos);
     });
 
     socket.on('disconnect', function () {

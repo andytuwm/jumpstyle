@@ -111,6 +111,10 @@ window.onload = function () {
 
             // function to control player movements
             this.movePlayer();
+            socket.emit('position update', {
+                x: this.player.body.x,
+                y: this.player.body.y
+            });
         },
 
         movePlayer: function () {
@@ -238,9 +242,19 @@ window.onload = function () {
             this.walls.setAll('body.immovable', true);
         },
 
-        shootProjectile: function (dir) {
+        shootProjectile: function (dir, pos) {
             if (!bulletPool.length) {
-                var bullet = game.add.sprite(this.player.body.x, this.player.body.y, 'bullet', 0, this.projectiles);
+                var bullet;
+                if (pos === undefined) {
+                    bullet = game.add.sprite(this.player.body.x, this.player.body.y, 'bullet', 0, this.projectiles);
+                    socket.emit('shoot', dir, {
+                        x: this.player.body.x,
+                        y: this.player.body.y
+                    });
+                } else {
+                    bullet = game.add.sprite(pos.x, pos.y, 'bullet', 0, this.projectiles);
+                    //TODO need new group for enemy bullets
+                }
                 if (dir === 'right') {
                     bullet.body.velocity.x = bulletSpeed;
                 } else if (dir === 'left') {
@@ -250,11 +264,20 @@ window.onload = function () {
                 } else if (dir === 'down') {
                     bullet.body.velocity.y = bulletSpeed;
                 }
+
                 bullet.checkWorldBounds = true;
                 bullet.events.onOutOfBounds.add(this.destroyObj, this);
             } else {
                 var bullet = bulletPool.pop();
-                bullet.reset(this.player.body.x, this.player.body.y);
+                if (pos === undefined) {
+                    bullet.reset(this.player.body.x, this.player.body.y);
+                    socket.emit('shoot', dir, {
+                        x: this.player.body.x,
+                        y: this.player.body.y
+                    });
+                } else {
+                    bullet.reset(pos.x, pos.y);
+                }
                 if (dir === 'right') {
                     bullet.body.velocity.x = bulletSpeed;
                 } else if (dir === 'left') {
@@ -264,6 +287,7 @@ window.onload = function () {
                 } else if (dir === 'down') {
                     bullet.body.velocity.y = bulletSpeed;
                 }
+
             }
         },
 
@@ -296,6 +320,19 @@ window.onload = function () {
                 enemyPlayers.splice(enemyPlayers.indexOf(playerToRemove), 1);
                 playerToRemove.sprite.destroy();
                 console.log(enemyPlayers);
+            });
+
+            socket.on('position updates', function (id, pos) {
+                var player = findPlayerById(id);
+                if (player) {
+                    //console.log(player.sprite.body);
+                    player.sprite.x = pos.x;
+                    player.sprite.y = pos.y;
+                }
+            });
+
+            socket.on('shoot', function (dir, pos) {
+                game.state.states.main.shootProjectile(dir, pos);
             });
         }
     };
