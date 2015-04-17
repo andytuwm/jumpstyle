@@ -1,5 +1,9 @@
 window.onload = function () {
     "use strict";
+    // Load 800 x 600 game window, auto rendering method, append to body
+    var game = new Phaser.Game(800, 600, Phaser.AUTO, "");
+
+    var socketId;
 
     // Player stats constants
     var stats = {
@@ -15,8 +19,7 @@ window.onload = function () {
     var bulletSpeed = 1600;
 
     // Checks for special movements
-    var socketId,
-        jumpCount = 0,
+    var jumpCount = 0,
         doubleTapRight = null,
         doubleTapLeft = null,
         dashing = false,
@@ -25,8 +28,6 @@ window.onload = function () {
         bulletPool = [],
         enemyPlayers = [];
 
-    // Load 800 x 600 game window, auto rendering method, append to body
-    var game = new Phaser.Game(800, 600, Phaser.AUTO, "");
     var mainState = {
         // We define the 3 default Phaser functions
 
@@ -52,7 +53,7 @@ window.onload = function () {
             this.cursor = game.input.keyboard.createCursorKeys();
             // Jump check event listener
             this.cursor.up.onDown.add(function () {
-                this.jump();
+                this.jump(this.playerStats);
             }, this);
             // Dash check event listener
             this.cursor.right.onDown.add(function () {
@@ -103,7 +104,6 @@ window.onload = function () {
         },
 
         // This function is called 60 times per second 
-        // It contains the game's logic
         update: function () {
             // add collisions between objects
             game.physics.arcade.collide(this.players, this.walls);
@@ -111,10 +111,10 @@ window.onload = function () {
 
             // function to control player movements
             this.movePlayer();
-            /*socket.emit('position update', {
+            socket.emit('position update', {
                 x: this.player.body.x,
                 y: this.player.body.y
-            });*/
+            });
         },
 
         movePlayer: function () {
@@ -140,7 +140,9 @@ window.onload = function () {
 
             // If player is touching floor, double jump count is reset
             if (this.player.body.touching.down) {
-                jumpCount = 0;
+                if (jumpCount !== 0) {
+                    jumpCount = 0;
+                }
                 if (canResetDash) {
                     // Allow dashing again only after landing
                     canDash = true;
@@ -152,9 +154,11 @@ window.onload = function () {
         jump: function () {
             if (this.player.body.touching.down) {
                 this.player.body.velocity.y = -this.playerStats.jumpVelocity;
+                //socket.emit('jump');
             }
             if (!this.player.body.touching.down && jumpCount < this.playerStats.jumpLimit) {
                 this.player.body.velocity.y = -this.playerStats.jumpVelocity;
+                //socket.emit('jump');
                 jumpCount++;
             }
         },
@@ -338,6 +342,19 @@ window.onload = function () {
             socket.on('shoot', function (dir, pos) {
                 game.state.states.main.shootProjectile(dir, pos);
             });
+
+            /*socket.on('jump', function (id) {
+                var player = findPlayerById(id);
+                if (player) {
+                    if (player.sprite.body.touching.down) {
+                        player.sprite.body.velocity.y = -player.jumpVelocity;
+                    }
+                    if (!player.sprite.body.touching.down && player.status.jumpCount < player.jumpLimit) {
+                        player.sprite.body.velocity.y = -player.jumpVelocity;
+                        player.status.jumpCount++;
+                    }
+                }
+            });*/
         }
     };
 
