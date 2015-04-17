@@ -26,6 +26,7 @@ window.onload = function () {
         canDash = true,
         canResetDash = true,
         bulletPool = [],
+        enemyBulletPool = [],
         enemyPlayers = [];
 
     var mainState = {
@@ -65,6 +66,8 @@ window.onload = function () {
 
             this.projectiles = game.add.group();
             this.projectiles.enableBody = true;
+            this.enemyProjectiles = game.add.group();
+            this.enemyProjectiles.enableBody = true;
 
             // Add a timer for use in dashes
             this.dResetTimer = game.time.create(false);
@@ -107,7 +110,10 @@ window.onload = function () {
         update: function () {
             // add collisions between objects
             game.physics.arcade.collide(this.players, this.walls);
-            game.physics.arcade.collide(this.projectiles, this.walls, this.destroyObj, null, this);
+            game.physics.arcade.collide(this.projectiles, this.walls, this.destroyOwnBullet, null, this);
+            game.physics.arcade.collide(this.projectiles, this.players, this.destroyOwnBullet, null, this);
+            game.physics.arcade.collide(this.enemyProjectiles, this.walls, this.destroyEnemyBullet, null, this);
+            game.physics.arcade.collide(this.enemyProjectiles, this.players, this.hitPlayer, null, this);
 
             // function to control player movements
             this.movePlayer();
@@ -245,57 +251,60 @@ window.onload = function () {
         },
 
         shootProjectile: function (dir, pos) {
-            if (!bulletPool.length) {
-                var bullet;
-                if (pos === undefined) {
+            var bullet;
+            if (pos === undefined) {
+                if (!bulletPool.length) {
                     bullet = game.add.sprite(this.player.body.x, this.player.body.y, 'bullet', 0, this.projectiles);
                     socket.emit('shoot', dir, {
                         x: this.player.body.x,
                         y: this.player.body.y
                     });
-                } else {
-                    bullet = game.add.sprite(pos.x, pos.y, 'bullet', 0, this.projectiles);
-                    //TODO need new group for enemy bullets
-                }
-                if (dir === 'right') {
-                    bullet.body.velocity.x = bulletSpeed;
-                } else if (dir === 'left') {
-                    bullet.body.velocity.x = -bulletSpeed;
-                } else if (dir === 'up') {
-                    bullet.body.velocity.y = -bulletSpeed;
-                } else if (dir === 'down') {
-                    bullet.body.velocity.y = bulletSpeed;
-                }
 
-                bullet.checkWorldBounds = true;
-                bullet.events.onOutOfBounds.add(this.destroyObj, this);
-            } else {
-                var bullet = bulletPool.pop();
-                if (pos === undefined) {
+                    bullet.checkWorldBounds = true;
+                    bullet.events.onOutOfBounds.add(this.destroyOwnBullet, this);
+                } else {
+                    bullet = bulletPool.pop();
                     bullet.reset(this.player.body.x, this.player.body.y);
                     socket.emit('shoot', dir, {
                         x: this.player.body.x,
                         y: this.player.body.y
                     });
+                }
+            } else {
+                if (!enemyBulletPool.length) {
+                    bullet = game.add.sprite(pos.x, pos.y, 'bullet', 0, this.enemyProjectiles);
+                    console.log('enemy fire!');
+                    bullet.checkWorldBounds = true;
+                    bullet.events.onOutOfBounds.add(this.destroyEnemyBullet, this);
                 } else {
                     // TODO add another bulletPool for enemy bullet sprites
+                    bullet = enemyBulletPool.pop();
                     bullet.reset(pos.x, pos.y);
                 }
-                if (dir === 'right') {
-                    bullet.body.velocity.x = bulletSpeed;
-                } else if (dir === 'left') {
-                    bullet.body.velocity.x = -bulletSpeed;
-                } else if (dir === 'up') {
-                    bullet.body.velocity.y = -bulletSpeed;
-                } else if (dir === 'down') {
-                    bullet.body.velocity.y = bulletSpeed;
-                }
+            }
 
+            if (dir === 'right') {
+                bullet.body.velocity.x = bulletSpeed;
+            } else if (dir === 'left') {
+                bullet.body.velocity.x = -bulletSpeed;
+            } else if (dir === 'up') {
+                bullet.body.velocity.y = -bulletSpeed;
+            } else if (dir === 'down') {
+                bullet.body.velocity.y = bulletSpeed;
             }
         },
 
-        destroyObj: function (obj) {
+        destroyOwnBullet: function (obj) {
             bulletPool.push(obj.kill());
+        },
+
+        destroyEnemyBullet: function (obj) {
+            enemyBulletPool.push(obj.kill());
+        },
+
+        hitPlayer: function (obj) {
+            enemyBulletPool.push(obj.kill());
+            this.player.reset(game.world.centerX, game.world.centerY);
         },
 
         drawCurrentPlayersOnServer: function () {
