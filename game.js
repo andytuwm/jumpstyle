@@ -250,7 +250,7 @@ window.onload = function () {
             this.walls.setAll('body.immovable', true);
         },
 
-        shootProjectile: function (dir, pos) {
+        shootProjectile: function (dir, pos, id) {
             var bullet;
             if (pos === undefined) {
                 if (!bulletPool.length) {
@@ -273,14 +273,14 @@ window.onload = function () {
             } else {
                 if (!enemyBulletPool.length) {
                     bullet = game.add.sprite(pos.x, pos.y, 'bullet', 0, this.enemyProjectiles);
-                    console.log('enemy fire!');
                     bullet.checkWorldBounds = true;
                     bullet.events.onOutOfBounds.add(this.destroyEnemyBullet, this);
                 } else {
-                    // TODO add another bulletPool for enemy bullet sprites
                     bullet = enemyBulletPool.pop();
                     bullet.reset(pos.x, pos.y);
                 }
+                bullet.fromId = id;
+                //console.log('enemy fire from ' + bullet.fromId);
             }
 
             if (dir === 'right') {
@@ -294,17 +294,20 @@ window.onload = function () {
             }
         },
 
-        destroyOwnBullet: function (obj) {
-            bulletPool.push(obj.kill());
+        destroyOwnBullet: function (bullet) {
+            bulletPool.push(bullet.kill());
         },
 
-        destroyEnemyBullet: function (obj) {
-            enemyBulletPool.push(obj.kill());
+        destroyEnemyBullet: function (bullet) {
+            enemyBulletPool.push(bullet.kill());
         },
 
-        hitPlayer: function (obj) {
-            enemyBulletPool.push(obj.kill());
-            this.player.reset(game.world.centerX, game.world.centerY);
+        hitPlayer: function (bullet) {
+            enemyBulletPool.push(bullet.kill());
+            console.log('shot by ' + bullet.fromId);
+            // Player respawn.
+            this.player.reset(game.world.centerX, game.world.centerY - 100);
+            // Emit player death
         },
 
         drawCurrentPlayersOnServer: function () {
@@ -348,8 +351,8 @@ window.onload = function () {
             });
 
             // Shoot bullet in the direction and from the position that enemy shot at
-            socket.on('shoot', function (dir, pos) {
-                game.state.states.main.shootProjectile(dir, pos);
+            socket.on('shoot', function (dir, pos, id) {
+                game.state.states.main.shootProjectile(dir, pos, id);
             });
 
             /*socket.on('jump', function (id) {
