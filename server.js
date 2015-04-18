@@ -28,6 +28,10 @@ io.on('connection', function (socket) {
         socketIDs.push(socketid);
     });
 
+    socket.on('died', function (killerID) {
+        io.to(killerID).emit('got kill');
+    })
+
     socket.on('shoot', function (dir, pos) {
         socket.broadcast.emit('shoot', dir, pos, socketid);
     });

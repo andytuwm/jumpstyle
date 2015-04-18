@@ -3,7 +3,7 @@ window.onload = function () {
     // Load 800 x 600 game window, auto rendering method, append to body
     var game = new Phaser.Game(800, 600, Phaser.AUTO, "");
 
-    var socketId;
+    var socketId, kScoreText, dScoreText;
 
     // Player stats constants
     var stats = {
@@ -27,6 +27,8 @@ window.onload = function () {
         canDash = true,
         canResetDash = true,
         canShoot = true,
+        kScore = 0,
+        dScore = 0,
         bulletPool = [],
         enemyBulletPool = [],
         enemyPlayers = [];
@@ -42,6 +44,8 @@ window.onload = function () {
             game.load.image('wallV', 'assets/wallVertical.png');
             game.load.image('wallH', 'assets/wallHorizontal.png');
             game.load.image('bullet', 'assets/bullet.png');
+            game.load.image('death', 'assets/skull.png');
+            game.load.image('kill', 'assets/knife.png');
         },
 
         // This function is called after the preload function
@@ -51,6 +55,24 @@ window.onload = function () {
             // Load arcade physics option
             game.physics.startSystem(Phaser.Physics.ARCADE);
             game.input.doubleTapRate = 200;
+
+            // Sprite groups
+            this.projectiles = game.add.group();
+            this.projectiles.enableBody = true;
+            this.enemyProjectiles = game.add.group();
+            this.enemyProjectiles.enableBody = true;
+            this.interface = game.add.group();
+            this.interface.enableBody = true;
+
+            // Position k/d score interface
+            game.add.sprite(680, 15, 'kill', 0, this.interface);
+            game.add.sprite(725, 15, 'death', 0, this.interface);
+            kScoreText = game.add.text(700, 15, kScore + "", {
+                fontSize: '14px'
+            });
+            dScoreText = game.add.text(749, 15, dScore + "", {
+                fontSize: '14px'
+            });
 
             // this.cursor will refer to arrow keys input
             this.cursor = game.input.keyboard.createCursorKeys();
@@ -65,11 +87,6 @@ window.onload = function () {
             this.cursor.left.onDown.add(function () {
                 this.dashLeft();
             }, this);
-
-            this.projectiles = game.add.group();
-            this.projectiles.enableBody = true;
-            this.enemyProjectiles = game.add.group();
-            this.enemyProjectiles.enableBody = true;
 
             // Add a timer for use in dashes
             this.dResetTimer = game.time.create(false);
@@ -317,7 +334,10 @@ window.onload = function () {
             console.log('shot by ' + bullet.fromId);
             // Player respawn.
             this.player.reset(game.world.centerX, game.world.centerY - 100);
+            dScore += 1;
+            dScoreText.text = dScore;
             // Emit player death
+            socket.emit('died', bullet.fromId);
         },
 
         drawCurrentPlayersOnServer: function () {
@@ -354,7 +374,6 @@ window.onload = function () {
             socket.on('position updates', function (id, pos) {
                 var player = findPlayerById(id);
                 if (player) {
-                    //console.log(player.sprite.body);
                     player.sprite.x = pos.x;
                     player.sprite.y = pos.y;
                 }
@@ -363,6 +382,11 @@ window.onload = function () {
             // Shoot bullet in the direction and from the position that enemy shot at
             socket.on('shoot', function (dir, pos, id) {
                 game.state.states.main.shootProjectile(dir, pos, id);
+            });
+
+            socket.on('got kill', function () {
+                kScore += 1;
+                kScoreText.text = kScore;
             });
 
             /*socket.on('jump', function (id) {
