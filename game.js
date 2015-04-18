@@ -249,21 +249,29 @@ window.onload = function () {
             this.walls = game.add.group();
             this.walls.enableBody = true;
 
-            // Create the 10 walls 
-            game.add.sprite(0, 0, 'wallV', 0, this.walls); // Left
-            game.add.sprite(780, 0, 'wallV', 0, this.walls); // Right
+            // Horizontal bounds
+            var leftBound = game.add.sprite(0, -50, 'wallV', 0, this.walls);
+            var rightBound = game.add.sprite(780, -50, 'wallV', 0, this.walls);
+            leftBound.scale.y = 2;
+            rightBound.scale.y = 2;
+
+            // Bottom bound
+            var ground = game.add.sprite(0, 580, 'wallH', 0, this.walls);
+            ground.scale.x = 4;
 
             game.add.sprite(100, 50, 'wallH', 0, this.walls); // Top left
             game.add.sprite(400, 50, 'wallH', 0, this.walls); // Top right
             game.add.sprite(100, 370, 'wallH', 0, this.walls); // Bottom left
-            game.add.sprite(400, 370, 'wallH', 0, this.walls); // Bottom right
+            game.add.sprite(430, 370, 'wallH', 0, this.walls); // Bottom right
 
             game.add.sprite(0, 210, 'wallH', 0, this.walls); // Middle left
-            game.add.sprite(500, 210, 'wallH', 0, this.walls); // Middle right
+            game.add.sprite(520, 210, 'wallH', 0, this.walls); // Middle right
 
-            var middleTop = game.add.sprite(150, 150, 'wallH', 0, this.walls);
-            middleTop.scale.setTo(1.5, 1);
-            var middleBottom = game.add.sprite(150, 300, 'wallH', 0, this.walls);
+            game.add.sprite(250, 475, 'wallH', 0, this.walls);
+            game.add.sprite(600, 475, 'wallH', 0, this.walls);
+
+            var middleTop = game.add.sprite(250, 150, 'wallH', 0, this.walls);
+            var middleBottom = game.add.sprite(175, 300, 'wallH', 0, this.walls);
             middleBottom.scale.setTo(1.5, 1);
 
             // Set walls to be immovable
