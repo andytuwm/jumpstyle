@@ -12,7 +12,8 @@ window.onload = function () {
         jumpVelocity: 500,
         jumpLimit: 1,
         dashTime: 80,
-        dashResetTime: 500
+        dashResetTime: 500,
+        shotDelay: 300
     };
 
     // World constants
@@ -25,6 +26,7 @@ window.onload = function () {
         dashing = false,
         canDash = true,
         canResetDash = true,
+        canShoot = true,
         bulletPool = [],
         enemyBulletPool = [],
         enemyPlayers = [];
@@ -72,6 +74,7 @@ window.onload = function () {
             // Add a timer for use in dashes
             this.dResetTimer = game.time.create(false);
             this.dCheckResetTimer = game.time.create(false);
+            this.shotTimer = game.time.create(false);
 
             //Initialize player
             this.players = game.add.group();
@@ -251,46 +254,53 @@ window.onload = function () {
         },
 
         shootProjectile: function (dir, pos, id) {
-            var bullet;
-            if (pos === undefined) {
-                if (!bulletPool.length) {
-                    bullet = game.add.sprite(this.player.body.x, this.player.body.y, 'bullet', 0, this.projectiles);
-                    socket.emit('shoot', dir, {
-                        x: this.player.body.x,
-                        y: this.player.body.y
-                    });
+            if (canShoot) {
+                var bullet;
+                if (pos === undefined) {
+                    if (!bulletPool.length) {
+                        bullet = game.add.sprite(this.player.body.x, this.player.body.y, 'bullet', 0, this.projectiles);
+                        socket.emit('shoot', dir, {
+                            x: this.player.body.x,
+                            y: this.player.body.y
+                        });
 
-                    bullet.checkWorldBounds = true;
-                    bullet.events.onOutOfBounds.add(this.destroyOwnBullet, this);
+                        bullet.checkWorldBounds = true;
+                        bullet.events.onOutOfBounds.add(this.destroyOwnBullet, this);
+                    } else {
+                        bullet = bulletPool.pop();
+                        bullet.reset(this.player.body.x, this.player.body.y);
+                        socket.emit('shoot', dir, {
+                            x: this.player.body.x,
+                            y: this.player.body.y
+                        });
+                    }
                 } else {
-                    bullet = bulletPool.pop();
-                    bullet.reset(this.player.body.x, this.player.body.y);
-                    socket.emit('shoot', dir, {
-                        x: this.player.body.x,
-                        y: this.player.body.y
-                    });
+                    if (!enemyBulletPool.length) {
+                        bullet = game.add.sprite(pos.x, pos.y, 'bullet', 0, this.enemyProjectiles);
+                        bullet.checkWorldBounds = true;
+                        bullet.events.onOutOfBounds.add(this.destroyEnemyBullet, this);
+                    } else {
+                        bullet = enemyBulletPool.pop();
+                        bullet.reset(pos.x, pos.y);
+                    }
+                    bullet.fromId = id;
+                    //console.log('enemy fire from ' + bullet.fromId);
                 }
-            } else {
-                if (!enemyBulletPool.length) {
-                    bullet = game.add.sprite(pos.x, pos.y, 'bullet', 0, this.enemyProjectiles);
-                    bullet.checkWorldBounds = true;
-                    bullet.events.onOutOfBounds.add(this.destroyEnemyBullet, this);
-                } else {
-                    bullet = enemyBulletPool.pop();
-                    bullet.reset(pos.x, pos.y);
-                }
-                bullet.fromId = id;
-                //console.log('enemy fire from ' + bullet.fromId);
-            }
 
-            if (dir === 'right') {
-                bullet.body.velocity.x = bulletSpeed;
-            } else if (dir === 'left') {
-                bullet.body.velocity.x = -bulletSpeed;
-            } else if (dir === 'up') {
-                bullet.body.velocity.y = -bulletSpeed;
-            } else if (dir === 'down') {
-                bullet.body.velocity.y = bulletSpeed;
+                if (dir === 'right') {
+                    bullet.body.velocity.x = bulletSpeed;
+                } else if (dir === 'left') {
+                    bullet.body.velocity.x = -bulletSpeed;
+                } else if (dir === 'up') {
+                    bullet.body.velocity.y = -bulletSpeed;
+                } else if (dir === 'down') {
+                    bullet.body.velocity.y = bulletSpeed;
+                }
+                canShoot = false;
+                this.shotTimer.add(this.playerStats.shotDelay, function () {
+                    canShoot = true;
+                }, this);
+                this.shotTimer.start();
             }
         },
 

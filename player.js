@@ -14,6 +14,7 @@ Player = function (id, game, playerSprite, createX, createY, stats) {
         jumpLimit: stats.jumpLimit,
         dashTime: stats.dashTime,
         dashResetTime: stats.dashResetTime,
+        shotDelay: stats.shotDelay,
         id: id
     };
 };
