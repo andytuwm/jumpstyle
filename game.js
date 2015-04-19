@@ -3,7 +3,7 @@ window.onload = function () {
     // Load 800 x 600 game window, auto rendering method, append to body
     var game = new Phaser.Game(800, 600, Phaser.AUTO, "");
 
-    var socketId, kScoreText, dScoreText;
+    var socketId, kScoreText, dScoreText, healthText;
 
     // Player stats constants
     var stats = {
@@ -48,6 +48,7 @@ window.onload = function () {
             game.load.image('bullet', 'assets/bullet.png');
             game.load.image('death', 'assets/skull.png');
             game.load.image('kill', 'assets/knife.png');
+            game.load.image('health', 'assets/heart.png');
         },
 
         // This function is called after the preload function
@@ -66,13 +67,22 @@ window.onload = function () {
             this.interface = game.add.group();
             this.interface.enableBody = true;
 
-            // Position k/d score interface
+            //Initialize player
+            this.players = game.add.group();
+            this.playerStats = new Player('selfPlayer', game, 'player', game.world.centerX, game.world.centerY, stats);
+            this.player = this.playerStats.sprite;
+
+            // Interface information display
             game.add.sprite(680, 15, 'kill', 0, this.interface);
             game.add.sprite(725, 15, 'death', 0, this.interface);
+            game.add.sprite(620, 15, 'health', 0, this.interface);
             kScoreText = game.add.text(700, 15, kScore + "", {
                 fontSize: '14px'
             });
             dScoreText = game.add.text(749, 15, dScore + "", {
+                fontSize: '14px'
+            });
+            healthText = game.add.text(640, 15, this.playerStats.health + "", {
                 fontSize: '14px'
             });
 
@@ -94,11 +104,6 @@ window.onload = function () {
             this.dResetTimer = game.time.create(false);
             this.dCheckResetTimer = game.time.create(false);
             this.shotTimer = game.time.create(false);
-
-            //Initialize player
-            this.players = game.add.group();
-            this.playerStats = new Player('selfPlayer', game, 'player', game.world.centerX, game.world.centerY, stats);
-            this.player = this.playerStats.sprite;
 
             // this.shoot contains keys for the four directions to shoot in
             this.shoot = {
@@ -351,10 +356,12 @@ window.onload = function () {
             console.log('shot by ' + bullet.fromId);
 
             this.playerStats.health -= bullet.dmg;
+            healthText.text = this.playerStats.health;
             if (this.playerStats.health < 0) {
                 // Player respawn.
                 this.player.reset(game.world.centerX, game.world.centerY - 100);
                 this.playerStats.health = this.playerStats.MAX_HEALTH;
+                healthText.text = this.playerStats.health;
                 dScore += 1;
                 dScoreText.text = dScore;
                 // Emit player death
