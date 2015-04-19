@@ -32,8 +32,8 @@ io.on('connection', function (socket) {
         io.to(killerID).emit('got kill');
     })
 
-    socket.on('shoot', function (dir, pos) {
-        socket.broadcast.emit('shoot', dir, pos, socketid);
+    socket.on('shoot', function (dir, pos, dmg) {
+        socket.broadcast.emit('shoot', dir, pos, socketid, dmg);
     });
     /*socket.on('jump', function () {
         socket.broadcast.emit('jump', socketid);

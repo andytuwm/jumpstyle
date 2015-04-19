@@ -15,6 +15,9 @@ Player = function (id, game, playerSprite, createX, createY, stats) {
         dashTime: stats.dashTime,
         dashResetTime: stats.dashResetTime,
         shotDelay: stats.shotDelay,
+        shotDamage: stats.shotDamage,
+        health: stats.health,
+        MAX_HEALTH: stats.health,
         id: id
     };
 };

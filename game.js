@@ -13,7 +13,9 @@ window.onload = function () {
         jumpLimit: 1,
         dashTime: 80,
         dashResetTime: 500,
-        shotDelay: 300
+        shotDelay: 320,
+        health: 1000,
+        shotDamage: 250
     };
 
     // World constants
@@ -347,12 +349,18 @@ window.onload = function () {
         hitPlayer: function (bullet) {
             enemyBulletPool.push(bullet.kill());
             console.log('shot by ' + bullet.fromId);
-            // Player respawn.
-            this.player.reset(game.world.centerX, game.world.centerY - 100);
-            dScore += 1;
-            dScoreText.text = dScore;
-            // Emit player death
-            socket.emit('died', bullet.fromId);
+
+            this.playerStats.health -= bullet.dmg;
+            if (this.playerStats.health < 0) {
+                // Player respawn.
+                this.player.reset(game.world.centerX, game.world.centerY - 100);
+                this.playerStats.health = this.playerStats.MAX_HEALTH;
+                dScore += 1;
+                dScoreText.text = dScore;
+                // Emit player death
+                socket.emit('died', bullet.fromId);
+            }
+            console.log(this.playerStats.health);
         },
 
         drawCurrentPlayersOnServer: function () {
@@ -395,8 +403,8 @@ window.onload = function () {
             });
 
             // Shoot bullet in the direction and from the position that enemy shot at
-            socket.on('shoot', function (dir, pos, id) {
-                game.state.states.main.shootProjectile(dir, pos, id);
+            socket.on('shoot', function (dir, pos, id, dmg) {
+                game.state.states.main.shootProjectile(dir, pos, id, dmg);
             });
 
             socket.on('got kill', function () {
