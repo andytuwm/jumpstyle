@@ -71,18 +71,22 @@ window.onload = function () {
             this.players = game.add.group();
             this.playerStats = new Player('selfPlayer', game, 'player', game.world.centerX, game.world.centerY, stats);
             this.player = this.playerStats.sprite;
+            this.player.checkWorldBounds = true;
+            this.player.events.onOutOfBounds.add(function () {
+                this.player.reset(game.world.centerX, game.world.centerY - 100);
+            }, this);
 
             // Interface information display
-            game.add.sprite(680, 15, 'kill', 0, this.interface);
-            game.add.sprite(725, 15, 'death', 0, this.interface);
-            game.add.sprite(620, 15, 'health', 0, this.interface);
-            kScoreText = game.add.text(700, 15, kScore + "", {
+            game.add.sprite(680, 27, 'kill', 0, this.interface);
+            game.add.sprite(725, 27, 'death', 0, this.interface);
+            game.add.sprite(620, 27, 'health', 0, this.interface);
+            kScoreText = game.add.text(700, 27, kScore + "", {
                 fontSize: '14px'
             });
-            dScoreText = game.add.text(749, 15, dScore + "", {
+            dScoreText = game.add.text(749, 27, dScore + "", {
                 fontSize: '14px'
             });
-            healthText = game.add.text(640, 15, this.playerStats.health + "", {
+            healthText = game.add.text(640, 27, this.playerStats.health + "", {
                 fontSize: '14px'
             });
 
@@ -256,15 +260,17 @@ window.onload = function () {
             this.walls = game.add.group();
             this.walls.enableBody = true;
 
-            // Horizontal bounds
+            // Left/Right bounds
             var leftBound = game.add.sprite(0, -50, 'wallV', 0, this.walls);
             var rightBound = game.add.sprite(780, -50, 'wallV', 0, this.walls);
             leftBound.scale.y = 2;
             rightBound.scale.y = 2;
 
-            // Bottom bound
+            // Top/Bottom bounds
             var ground = game.add.sprite(0, 580, 'wallH', 0, this.walls);
             ground.scale.x = 4;
+            var ceiling = game.add.sprite(0, 0, 'wallH', 0, this.walls);
+            ceiling.scale.x = 4;
 
             game.add.sprite(100, 50, 'wallH', 0, this.walls); // Top left
             game.add.sprite(400, 50, 'wallH', 0, this.walls); // Top right
@@ -318,6 +324,15 @@ window.onload = function () {
                     }, this);
                     this.shotTimer.start();
                 }
+                if (dir === 'right') {
+                    bullet.body.velocity.x = bulletSpeed;
+                } else if (dir === 'left') {
+                    bullet.body.velocity.x = -bulletSpeed;
+                } else if (dir === 'up') {
+                    bullet.body.velocity.y = -bulletSpeed;
+                } else if (dir === 'down') {
+                    bullet.body.velocity.y = bulletSpeed;
+                }
             } else {
                 if (!enemyBulletPool.length) {
                     bullet = game.add.sprite(pos.x, pos.y, 'bullet', 0, this.enemyProjectiles);
@@ -330,16 +345,15 @@ window.onload = function () {
                 bullet.fromId = id;
                 bullet.dmg = dmg;
                 //console.log('enemy fire from ' + bullet.fromId + ', dmg: ' + bullet.dmg);
-            }
-
-            if (dir === 'right') {
-                bullet.body.velocity.x = bulletSpeed;
-            } else if (dir === 'left') {
-                bullet.body.velocity.x = -bulletSpeed;
-            } else if (dir === 'up') {
-                bullet.body.velocity.y = -bulletSpeed;
-            } else if (dir === 'down') {
-                bullet.body.velocity.y = bulletSpeed;
+                if (dir === 'right') {
+                    bullet.body.velocity.x = bulletSpeed;
+                } else if (dir === 'left') {
+                    bullet.body.velocity.x = -bulletSpeed;
+                } else if (dir === 'up') {
+                    bullet.body.velocity.y = -bulletSpeed;
+                } else if (dir === 'down') {
+                    bullet.body.velocity.y = bulletSpeed;
+                }
             }
         },
 
