@@ -278,54 +278,61 @@ window.onload = function () {
             this.walls.setAll('body.immovable', true);
         },
 
-        shootProjectile: function (dir, pos, id) {
-            if (canShoot) {
-                var bullet;
-                if (pos === undefined) {
+        shootProjectile: function (dir, pos, id, dmg) {
+            var bullet;
+            // if pos is undefined, this is a shot made by local player.
+            if (pos === undefined) {
+                if (canShoot) {
                     if (!bulletPool.length) {
+                        // create new bullet sprite
                         bullet = game.add.sprite(this.player.body.x, this.player.body.y, 'bullet', 0, this.projectiles);
+                        // emit bullet to server
                         socket.emit('shoot', dir, {
                             x: this.player.body.x,
                             y: this.player.body.y
-                        });
-
+                        }, this.playerStats.shotDamage + Math.floor((Math.random() * 50) - 50));
+                        // kill bullet sprite if it goes out of bounds
                         bullet.checkWorldBounds = true;
                         bullet.events.onOutOfBounds.add(this.destroyOwnBullet, this);
                     } else {
+                        // get sprite from bullet pool
                         bullet = bulletPool.pop();
+                        // reset bullet sprite back 
                         bullet.reset(this.player.body.x, this.player.body.y);
+                        // emit bullet to server
                         socket.emit('shoot', dir, {
                             x: this.player.body.x,
                             y: this.player.body.y
-                        });
+                        }, this.playerStats.shotDamage + Math.floor((Math.random() * 50) - 50));
                     }
+                    canShoot = false;
+                    this.shotTimer.add(this.playerStats.shotDelay, function () {
+                        canShoot = true;
+                    }, this);
+                    this.shotTimer.start();
+                }
+            } else {
+                if (!enemyBulletPool.length) {
+                    bullet = game.add.sprite(pos.x, pos.y, 'bullet', 0, this.enemyProjectiles);
+                    bullet.checkWorldBounds = true;
+                    bullet.events.onOutOfBounds.add(this.destroyEnemyBullet, this);
                 } else {
-                    if (!enemyBulletPool.length) {
-                        bullet = game.add.sprite(pos.x, pos.y, 'bullet', 0, this.enemyProjectiles);
-                        bullet.checkWorldBounds = true;
-                        bullet.events.onOutOfBounds.add(this.destroyEnemyBullet, this);
-                    } else {
-                        bullet = enemyBulletPool.pop();
-                        bullet.reset(pos.x, pos.y);
-                    }
-                    bullet.fromId = id;
-                    //console.log('enemy fire from ' + bullet.fromId);
+                    bullet = enemyBulletPool.pop();
+                    bullet.reset(pos.x, pos.y);
                 }
+                bullet.fromId = id;
+                bullet.dmg = dmg;
+                //console.log('enemy fire from ' + bullet.fromId + ', dmg: ' + bullet.dmg);
+            }
 
-                if (dir === 'right') {
-                    bullet.body.velocity.x = bulletSpeed;
-                } else if (dir === 'left') {
-                    bullet.body.velocity.x = -bulletSpeed;
-                } else if (dir === 'up') {
-                    bullet.body.velocity.y = -bulletSpeed;
-                } else if (dir === 'down') {
-                    bullet.body.velocity.y = bulletSpeed;
-                }
-                canShoot = false;
-                this.shotTimer.add(this.playerStats.shotDelay, function () {
-                    canShoot = true;
-                }, this);
-                this.shotTimer.start();
+            if (dir === 'right') {
+                bullet.body.velocity.x = bulletSpeed;
+            } else if (dir === 'left') {
+                bullet.body.velocity.x = -bulletSpeed;
+            } else if (dir === 'up') {
+                bullet.body.velocity.y = -bulletSpeed;
+            } else if (dir === 'down') {
+                bullet.body.velocity.y = bulletSpeed;
             }
         },
 
