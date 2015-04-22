@@ -3,7 +3,7 @@ window.onload = function () {
     // Load 800 x 600 game window, auto rendering method, append to body
     var game = new Phaser.Game(800, 600, Phaser.AUTO, "");
 
-    var socketId, kScoreText, dScoreText, healthText;
+    var socketId, kScoreText, dScoreText, healthText, positionData = new Map();
 
     // Player stats constants
     var stats = {
@@ -11,7 +11,7 @@ window.onload = function () {
         gravityAcceleration: 1500,
         jumpVelocity: 500,
         jumpLimit: 1,
-        dashTime: 80,
+        dashTime: 90,
         dashResetTime: 500,
         shotDelay: 320,
         health: 1000,
@@ -148,6 +148,7 @@ window.onload = function () {
 
             // function to control player movements
             this.movePlayer();
+            this.moveEnemies();
             socket.emit('position update', {
                 x: this.player.body.x,
                 y: this.player.body.y
@@ -188,6 +189,20 @@ window.onload = function () {
 
         },
 
+        moveEnemies: function () {
+            if (positionData) {
+                positionData.forEach(function (inputs, sprite) {
+                    //console.log(inputs);
+                    if (inputs.length) {
+                        sprite.x = inputs[sprite.positionCount].position.x;
+                        sprite.y = inputs[sprite.positionCount].position.y;
+                        sprite.positionCount++;
+                    }
+                });
+
+            }
+        },
+
         jump: function () {
             if (this.player.body.touching.down) {
                 this.player.body.velocity.y = -this.playerStats.jumpVelocity;
@@ -206,7 +221,7 @@ window.onload = function () {
                 dashing = false;
                 // Stop acceleration after completing dash.
                 this.player.body.acceleration.x = 0;
-
+                this.player.body.velocity.x = 0;
                 // Add timer for after how long player can dash again.
                 this.dResetTimer.add(this.playerStats.dashResetTime, function () {
                     canResetDash = true;
@@ -323,15 +338,15 @@ window.onload = function () {
                         canShoot = true;
                     }, this);
                     this.shotTimer.start();
-                }
-                if (dir === 'right') {
-                    bullet.body.velocity.x = bulletSpeed;
-                } else if (dir === 'left') {
-                    bullet.body.velocity.x = -bulletSpeed;
-                } else if (dir === 'up') {
-                    bullet.body.velocity.y = -bulletSpeed;
-                } else if (dir === 'down') {
-                    bullet.body.velocity.y = bulletSpeed;
+                    if (dir === 'right') {
+                        bullet.body.velocity.x = bulletSpeed;
+                    } else if (dir === 'left') {
+                        bullet.body.velocity.x = -bulletSpeed;
+                    } else if (dir === 'up') {
+                        bullet.body.velocity.y = -bulletSpeed;
+                    } else if (dir === 'down') {
+                        bullet.body.velocity.y = bulletSpeed;
+                    }
                 }
             } else {
                 if (!enemyBulletPool.length) {
@@ -431,6 +446,14 @@ window.onload = function () {
             socket.on('got kill', function () {
                 kScore += 1;
                 kScoreText.text = kScore;
+            });
+
+            socket.on('serverTimestamp', function (id, inputs) {
+                //console.log('id: ' + id);
+                //console.log(inputs);
+                var sprite = findPlayerById(id).sprite;
+                positionData.set(sprite, inputs);
+                sprite.positionCount = 0;
             });
 
             /*socket.on('jump', function (id) {
