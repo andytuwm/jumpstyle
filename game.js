@@ -452,9 +452,11 @@ window.onload = function () {
                 //console.log('id: ' + id);
                 //console.log(inputs);
                 var sprite = findPlayerById(id).sprite;
-                positionData.set(sprite, inputs);
-                sprite.positionCount = 0;
-                sprite.dataLen = inputs.length;
+                if (sprite) {
+                    sprite.positionCount = 0;
+                    sprite.dataLen = inputs.length;
+                    positionData.set(sprite, inputs);
+                }
             });
 
             /*socket.on('jump', function (id) {
