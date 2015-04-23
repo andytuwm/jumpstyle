@@ -193,7 +193,7 @@ window.onload = function () {
             if (positionData) {
                 positionData.forEach(function (inputs, sprite) {
                     //console.log(inputs);
-                    if (inputs.length) {
+                    if (inputs.length && sprite.positionCount < sprite.dataLen) {
                         sprite.x = inputs[sprite.positionCount].position.x;
                         sprite.y = inputs[sprite.positionCount].position.y;
                         sprite.positionCount++;
@@ -454,6 +454,7 @@ window.onload = function () {
                 var sprite = findPlayerById(id).sprite;
                 positionData.set(sprite, inputs);
                 sprite.positionCount = 0;
+                sprite.dataLen = inputs.length;
             });
 
             /*socket.on('jump', function (id) {
