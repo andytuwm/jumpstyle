@@ -3,7 +3,7 @@ var app = express();
 var http = require('http').Server(app);
 var io = require('socket.io')(http);
 var socketIDs = []; // Track how many players there are
-var serverTimestep = 3000;
+var serverTimestep = 100;
 
 // Allow serving static files in same directory as server file (root)
 app.use(express.static(__dirname));
