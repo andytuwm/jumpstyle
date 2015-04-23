@@ -41,10 +41,6 @@ io.on('connection', function (socket) {
     socket.on('shoot', function (dir, pos, dmg) {
         socket.broadcast.emit('shoot', dir, pos, socketid, dmg);
     });
-    /*socket.on('jump', function () {
-        socket.broadcast.emit('jump', socketid);
-        console.log(socketid + 'jumped');
-    });*/
 
     socket.on('disconnect', function () {
         var i = socketIDs.indexOf(socketid);
