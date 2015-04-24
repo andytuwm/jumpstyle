@@ -309,7 +309,7 @@ window.onload = function () {
                 if (canShoot) {
                     if (!bulletPool.length) {
                         // create new bullet sprite
-                        bullet = game.add.sprite(this.player.body.x, this.player.body.y, 'bullet', 0, this.projectiles);
+                        bullet = game.add.sprite(this.player.body.x + 13, this.player.body.y + 4, 'bullet', 0, this.projectiles);
                         // emit bullet to server
                         socket.emit('shoot', dir, {
                             x: this.player.body.x,
@@ -322,7 +322,7 @@ window.onload = function () {
                         // get sprite from bullet pool
                         bullet = bulletPool.pop();
                         // reset bullet sprite back 
-                        bullet.reset(this.player.body.x, this.player.body.y);
+                        bullet.reset(this.player.body.x + 13, this.player.body.y + 4);
                         // emit bullet to server
                         socket.emit('shoot', dir, {
                             x: this.player.body.x,
@@ -335,18 +335,22 @@ window.onload = function () {
                     }, this);
                     this.shotTimer.start();
                     if (dir === 'right') {
+                        bullet.angle = 0;
                         bullet.body.velocity.x = bulletSpeed;
                     } else if (dir === 'left') {
+                        bullet.angle = 0;
                         bullet.body.velocity.x = -bulletSpeed;
                     } else if (dir === 'up') {
+                        bullet.angle = 90;
                         bullet.body.velocity.y = -bulletSpeed;
                     } else if (dir === 'down') {
+                        bullet.angle = 90;
                         bullet.body.velocity.y = bulletSpeed;
                     }
                 }
             } else {
                 if (!enemyBulletPool.length) {
-                    bullet = game.add.sprite(pos.x, pos.y, 'bullet', 0, this.enemyProjectiles);
+                    bullet = game.add.sprite(pos.x + 13, pos.y + 4, 'bullet', 0, this.enemyProjectiles);
                     bullet.checkWorldBounds = true;
                     bullet.events.onOutOfBounds.add(this.destroyEnemyBullet, this);
                 } else {
@@ -355,14 +359,17 @@ window.onload = function () {
                 }
                 bullet.fromId = id;
                 bullet.dmg = dmg;
-                //console.log('enemy fire from ' + bullet.fromId + ', dmg: ' + bullet.dmg);
                 if (dir === 'right') {
+                    bullet.angle = 0;
                     bullet.body.velocity.x = bulletSpeed;
                 } else if (dir === 'left') {
+                    bullet.angle = 0;
                     bullet.body.velocity.x = -bulletSpeed;
                 } else if (dir === 'up') {
+                    bullet.angle = 90;
                     bullet.body.velocity.y = -bulletSpeed;
                 } else if (dir === 'down') {
+                    bullet.angle = 90;
                     bullet.body.velocity.y = bulletSpeed;
                 }
             }
