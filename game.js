@@ -3,7 +3,7 @@ window.onload = function () {
     // Load 800 x 600 game window, auto rendering method, append to body
     var game = new Phaser.Game(800, 600, Phaser.AUTO, "");
 
-    var socketId, kScoreText, dScoreText, healthText;
+    var socketId, kScoreText, dScoreText, healthText, positionData = new Map();
 
     // Player stats constants
     var stats = {
@@ -11,7 +11,7 @@ window.onload = function () {
         gravityAcceleration: 1500,
         jumpVelocity: 500,
         jumpLimit: 1,
-        dashTime: 80,
+        dashTime: 90,
         dashResetTime: 500,
         shotDelay: 320,
         health: 1000,
@@ -148,6 +148,7 @@ window.onload = function () {
 
             // function to control player movements
             this.movePlayer();
+            this.moveEnemies();
             socket.emit('position update', {
                 x: this.player.body.x,
                 y: this.player.body.y
@@ -188,14 +189,26 @@ window.onload = function () {
 
         },
 
+        moveEnemies: function () {
+            if (positionData) {
+                positionData.forEach(function (inputs, sprite) {
+                    //console.log(inputs);
+                    if (inputs.length && sprite.positionCount < sprite.dataLen) {
+                        sprite.x = inputs[sprite.positionCount].position.x;
+                        sprite.y = inputs[sprite.positionCount].position.y;
+                        sprite.positionCount++;
+                    }
+                });
+
+            }
+        },
+
         jump: function () {
             if (this.player.body.touching.down) {
                 this.player.body.velocity.y = -this.playerStats.jumpVelocity;
-                //socket.emit('jump');
             }
             if (!this.player.body.touching.down && jumpCount < this.playerStats.jumpLimit) {
                 this.player.body.velocity.y = -this.playerStats.jumpVelocity;
-                //socket.emit('jump');
                 jumpCount++;
             }
         },
@@ -206,7 +219,7 @@ window.onload = function () {
                 dashing = false;
                 // Stop acceleration after completing dash.
                 this.player.body.acceleration.x = 0;
-
+                this.player.body.velocity.x = 0;
                 // Add timer for after how long player can dash again.
                 this.dResetTimer.add(this.playerStats.dashResetTime, function () {
                     canResetDash = true;
@@ -272,17 +285,15 @@ window.onload = function () {
             var ceiling = game.add.sprite(0, 0, 'wallH', 0, this.walls);
             ceiling.scale.x = 4;
 
+            // Platforms
             game.add.sprite(100, 50, 'wallH', 0, this.walls); // Top left
             game.add.sprite(400, 50, 'wallH', 0, this.walls); // Top right
             game.add.sprite(100, 370, 'wallH', 0, this.walls); // Bottom left
             game.add.sprite(430, 370, 'wallH', 0, this.walls); // Bottom right
-
             game.add.sprite(0, 210, 'wallH', 0, this.walls); // Middle left
             game.add.sprite(520, 210, 'wallH', 0, this.walls); // Middle right
-
             game.add.sprite(250, 475, 'wallH', 0, this.walls);
             game.add.sprite(600, 475, 'wallH', 0, this.walls);
-
             var middleTop = game.add.sprite(250, 150, 'wallH', 0, this.walls);
             var middleBottom = game.add.sprite(175, 300, 'wallH', 0, this.walls);
             middleBottom.scale.setTo(1.5, 1);
@@ -298,7 +309,7 @@ window.onload = function () {
                 if (canShoot) {
                     if (!bulletPool.length) {
                         // create new bullet sprite
-                        bullet = game.add.sprite(this.player.body.x, this.player.body.y, 'bullet', 0, this.projectiles);
+                        bullet = game.add.sprite(this.player.body.x + 13, this.player.body.y + 4, 'bullet', 0, this.projectiles);
                         // emit bullet to server
                         socket.emit('shoot', dir, {
                             x: this.player.body.x,
@@ -311,7 +322,7 @@ window.onload = function () {
                         // get sprite from bullet pool
                         bullet = bulletPool.pop();
                         // reset bullet sprite back 
-                        bullet.reset(this.player.body.x, this.player.body.y);
+                        bullet.reset(this.player.body.x + 13, this.player.body.y + 4);
                         // emit bullet to server
                         socket.emit('shoot', dir, {
                             x: this.player.body.x,
@@ -323,19 +334,23 @@ window.onload = function () {
                         canShoot = true;
                     }, this);
                     this.shotTimer.start();
-                }
-                if (dir === 'right') {
-                    bullet.body.velocity.x = bulletSpeed;
-                } else if (dir === 'left') {
-                    bullet.body.velocity.x = -bulletSpeed;
-                } else if (dir === 'up') {
-                    bullet.body.velocity.y = -bulletSpeed;
-                } else if (dir === 'down') {
-                    bullet.body.velocity.y = bulletSpeed;
+                    if (dir === 'right') {
+                        bullet.angle = 0;
+                        bullet.body.velocity.x = bulletSpeed;
+                    } else if (dir === 'left') {
+                        bullet.angle = 0;
+                        bullet.body.velocity.x = -bulletSpeed;
+                    } else if (dir === 'up') {
+                        bullet.angle = 90;
+                        bullet.body.velocity.y = -bulletSpeed;
+                    } else if (dir === 'down') {
+                        bullet.angle = 90;
+                        bullet.body.velocity.y = bulletSpeed;
+                    }
                 }
             } else {
                 if (!enemyBulletPool.length) {
-                    bullet = game.add.sprite(pos.x, pos.y, 'bullet', 0, this.enemyProjectiles);
+                    bullet = game.add.sprite(pos.x + 13, pos.y + 4, 'bullet', 0, this.enemyProjectiles);
                     bullet.checkWorldBounds = true;
                     bullet.events.onOutOfBounds.add(this.destroyEnemyBullet, this);
                 } else {
@@ -344,14 +359,17 @@ window.onload = function () {
                 }
                 bullet.fromId = id;
                 bullet.dmg = dmg;
-                //console.log('enemy fire from ' + bullet.fromId + ', dmg: ' + bullet.dmg);
                 if (dir === 'right') {
+                    bullet.angle = 0;
                     bullet.body.velocity.x = bulletSpeed;
                 } else if (dir === 'left') {
+                    bullet.angle = 0;
                     bullet.body.velocity.x = -bulletSpeed;
                 } else if (dir === 'up') {
+                    bullet.angle = 90;
                     bullet.body.velocity.y = -bulletSpeed;
                 } else if (dir === 'down') {
+                    bullet.angle = 90;
                     bullet.body.velocity.y = bulletSpeed;
                 }
             }
@@ -366,14 +384,15 @@ window.onload = function () {
         },
 
         hitPlayer: function (bullet) {
-            enemyBulletPool.push(bullet.kill());
+            enemyBulletPool.push(bullet.kill()); // remove bullet sprite from view
             console.log('shot by ' + bullet.fromId);
 
             this.playerStats.health -= bullet.dmg;
-            healthText.text = this.playerStats.health;
+            healthText.text = this.playerStats.health; // update health
             if (this.playerStats.health < 0) {
                 // Player respawn.
                 this.player.reset(game.world.centerX, game.world.centerY - 100);
+                // Update stats
                 this.playerStats.health = this.playerStats.MAX_HEALTH;
                 healthText.text = this.playerStats.health;
                 dScore += 1;
@@ -388,9 +407,9 @@ window.onload = function () {
             socket.emit('get players');
             socket.on('return players', function (sockets, id) {
                 //console.log(sockets);
-                socketId = id;
+                socketId = id; // get own player id
+                // Iterate through all the players on the server and create a sprite for each
                 for (var i = 0; i < sockets.length; i++) {
-                    // TODO Add sprite at latest updated correct position
                     var enemy = new Player(sockets[i], game, 'player', game.world.centerX, game.world.centerY, stats);
                     enemyPlayers.push(enemy);
                 }
@@ -415,37 +434,36 @@ window.onload = function () {
             });
 
             // Set the exact position of a sprite. Used to sync up positions at a lower frequency
-            socket.on('position updates', function (id, pos) {
+            /*socket.on('position updates', function (id, pos) {
                 var player = findPlayerById(id);
                 if (player) {
                     player.sprite.x = pos.x;
                     player.sprite.y = pos.y;
                 }
-            });
+            });*/
 
             // Shoot bullet in the direction and from the position that enemy shot at
             socket.on('shoot', function (dir, pos, id, dmg) {
                 game.state.states.main.shootProjectile(dir, pos, id, dmg);
             });
 
+            // Update kills score
             socket.on('got kill', function () {
                 kScore += 1;
                 kScoreText.text = kScore;
             });
 
-            /*socket.on('jump', function (id) {
-                var player = findPlayerById(id);
-                if (player) {
-                    if (player.sprite.body.touching.down) {
-                        player.sprite.body.velocity.y = -player.jumpVelocity;
-                    }
-                    if (!player.sprite.body.touching.down && player.status.jumpCount < player.jumpLimit) {
-                        player.sprite.body.velocity.y = -player.jumpVelocity;
-                        player.status.jumpCount++;
-                    }
+            // Set position data for an enemy player on every timestep.
+            socket.on('serverTimestamp', function (id, inputs) {
+                var sprite = findPlayerById(id).sprite;
+                if (sprite) {
+                    sprite.positionCount = 0; // counter variable for indexing each sprite's position data
+                    sprite.dataLen = inputs.length; // get max length of inputs array
+                    positionData.set(sprite, inputs); // set inputs data to corresponding sprite
                 }
-            });*/
+            });
         }
+
     };
 
     // Add the game state defined above. Start it onload.
