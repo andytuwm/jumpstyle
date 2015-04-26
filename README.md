@@ -10,11 +10,6 @@ Ghetto HTML5 platform shooter game with multiplayer
 - double tap left/right to dash
 
 ===
-Uses Express and Socket.io modules for Node.js
-
-Phaser for HTML5 game framework
-
-===
-TO-DO:
-- Proper Client interpolation 
-- Lag compensation for bullets
+Uses:
+- Express and Socket.io modules for Node.js
+- Phaser for HTML5 game framework
